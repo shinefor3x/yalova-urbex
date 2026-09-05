@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { display: flex; heig
-            ht: 100vh; background-color: #121212; color: #fff; overflow: hidden; }
+        body { display: flex; height: 100vh; background-color: #121212; color: #fff; overflow: hidden; }
         
         /* Açılış Animasyonu Ekranı */
         #welcome-screen {
@@ -128,23 +127,22 @@
 
         const map = L.map('map').setView([40.6500, 29.2600], 11);
 
-        }) L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
-
             maxZoom: 19
         }).addTo(map);
 
         function ikonOlustur(simge) {
             return L.divIcon({
-            })  className: 'custom-icon',
+                className: 'custom-icon',
                 html: simge,
                 iconSize: [36, 36],
                 iconAnchor: [18, 18]
             });
         }
 
-        // 80 Noktalık Detaylı Veri Seti (Kamera, Risk ve Koordinatlar Dahil)
-        const mekenlar = [
+        // 80 Noktalık Detaylı Veri Seti
+        const mekanlar = [
             { id: 1, isim: "Fıstıklı Atıl Tatil Köyü", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.5224, boy: 28.8485, risk: "Orta Risk", kamera: "Yok / Harabe", aciklama: "Sahil şeridinde devasa metruk tatil kompleksi." },
             { id: 2, isim: "Esenköy Eski Kamp Binası", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6273, boy: 28.9564, risk: "Düşük Risk", kamera: "Yok", aciklama: "Orman içinde doğaya yenik düşmüş kamp binası." },
             { id: 3, isim: "Taşköprü Atıl Tuğla Fabrikası", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6621, boy: 29.3510, risk: "Yüksek Risk", kamera: "Var (Eski Güvenlik)", aciklama: "Dev bacalı ve paslı metalik endüstriyel alan." },
@@ -209,10 +207,4 @@
             { id: 56, isim: "Şenköy Eski Taş Yapı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6400, boy: 29.0900, risk: "Orta Risk", kamera: "Yok", aciklama: "Tarihi dokuya sahip metruk yapı." },
             { id: 57, isim: "Hasanbaba Dik Kayalık Kulvarı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6150, boy: 29.0550, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Zorlu tırmanış bacası." },
             { id: 58, isim: "Yalova Batı Sahili Seyir Alanı", kategori: "Manzara Noktası", simge: "🌄", en: 40.6500, boy: 29.2500, risk: "Düşük Risk", kamera: "Yok", aciklama: "Sahil boyunca açık deniz manzarası." },
-           
-    
-            { id: 59, isim: "Çiftlikköy Atıl Depo Alanı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6750, boy: 29.3200, risk: "Orta Risk", kamera: "Var (Aktif)", aciklama: 
-
-                </body>
-                </html>
-            
+            { id: 59, isim: "Çiftlikköy Atıl Depo Alanı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6750, boy: 29.3200, risk: "Orta Risk", kamera: "Var (Aktif)", aciklama: "Eski kereste ve malzeme deposu harab
