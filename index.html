@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yalova Taktiksel Urbex & Zirve Haritası (80 Nokta)</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { display: flex; height: 100vh; background-color: #121212; color: #fff; overflow: hidden; }
+        
+        /* Açılış Animasyonu Ekranı */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0d0d0d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        #welcome-screen h1 {
+            font-size: 2rem;
+            color: #ff4757;
+            text-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
+            margin-bottom: 10px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        #welcome-screen p {
+            font-size: 0.85rem;
+            color: #aaa;
+            letter-spacing: 2px;
+        }
+
+        /* Yan Panel ve Arayüz */
+        #sidebar { width: 420px; background-color: #1e1e1e; padding: 20px; overflow-y: auto; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+        #sidebar h1 { font-size: 1.25rem; color: #ff4757; }
+        #sidebar p { font-size: 0.8rem; color: #aaa; }
+        
+        #search-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; outline: none; }
+        .filter-container { display: flex; flex-wrap: wrap; gap: 6px; }
+        .filter-btn { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .filter-btn.active, .filter-btn:hover { background: #ff4757; color: #fff; border-color: #ff4757; }
+
+        #location-list { flex: 1; overflow-y: auto; }
+        .card { background-color: #2a2a2a; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ff4757; transition: 0.2s; }
+        .card:hover { background-color: #333; }
+        .card h3 { font-size: 0.95rem; margin-bottom: 4px; }
+        .card .badge { display: inline-block; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; background-color: #ff4757; color: #fff; margin-bottom: 6px; }
+        .card p { font-size: 0.75rem; color: #ccc; margin-bottom: 4px; }
+        .info-tag { font-size: 0.72rem; padding: 2px 5px; border-radius: 3px; display: inline-block; margin-right: 4px; margin-top: 4px; }
+        .tag-cam-var { background: #c0392b; color: #fff; }
+        .tag-cam-yok { background: #27ae60; color: #fff; }
+        .tag-risk { background: #d35400; color: #fff; }
+        
+        .btn-nav { display: block; text-align: center; background-color: #2ed573; color: #000; padding: 6px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.75rem; margin-top: 8px; }
+        
+        #map { flex: 1; height: 100%; z-index: 1; }
+        
+        .custom-icon {
+            background: #2a2a2a;
+            border: 2px solid #ff4757;
+            border-radius: 50%;
+            color: #fff;
+            text-align: center;
+            line-height: 36px;
+            font-size: 16px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column-reverse; }
+            #sidebar { width: 100%; height: 45vh; }
+            #map { height: 55vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Karşılama Ekranı -->
+    <div id="welcome-screen">
+        <h1>Hoşgeldin Sahip Doğu 🏚️</h1>
+        <p>80 NOKTALIK TAKTİKSEL ARŞİV YÜKLENİYOR...</p>
+    </div>
+
+    <div id="sidebar">
+        <div>
+            <h1>🏚️ Yalova Taktiksel Urbex & Zirve</h1>
+            <p>80 Nokta: Kamera durumu, risk seviyesi ve Google Maps rota entegrasyonu</p>
+        </div>
+        
+        <!-- Arama Kutusu -->
+        <input type="text" id="search-input" placeholder="Mekan veya bölge ara..." onkeyup="filtrele()">
+
+        <!-- Kategori Filtreleri -->
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="kategoriFiltrele('hepsi', this)">Tümü (80)</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Terk Edilmiş Yapı', this)">🏚️ Yapılar</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Tırmanış & Zirve', this)">🧗‍♂️ Tırmanış</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Manzara Noktası', this)">🌄 Manzara</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Sanayi / Atıl', this)">🏭 Sanayi</button>
+        </div>
+
+        <div id="location-list"></div>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const welcomeScreen = document.getElementById('welcome-screen');
+                if(welcomeScreen) {
+                    welcomeScreen.style.opacity = '0';
+                    welcomeScreen.style.visibility = 'hidden';
+                    setTimeout(() => welcomeScreen.remove(), 600);
+                }
+            }, 2000);
+        });
+
+        const map = L.map('map').setView([40.6500, 29.2600], 11);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        function ikonOlustur(simge) {
+            return L.divIcon({
+                className: 'custom-icon',
+                html: simge,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+        }
+
+        // 80 Noktalık Detaylı Veri Seti (Kamera, Risk ve Koordinatlar Dahil)
+        const mekenlar = [
+            { id: 1, isim: "Fıstıklı Atıl Tatil Köyü", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.5224, boy: 28.8485, risk: "Orta Risk", kamera: "Yok / Harabe", aciklama: "Sahil şeridinde devasa metruk tatil kompleksi." },
+            { id: 2, isim: "Esenköy Eski Kamp Binası", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6273, boy: 28.9564, risk: "Düşük Risk", kamera: "Yok", aciklama: "Orman içinde doğaya yenik düşmüş kamp binası." },
+            { id: 3, isim: "Taşköprü Atıl Tuğla Fabrikası", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6621, boy: 29.3510, risk: "Yüksek Risk", kamera: "Var (Eski Güvenlik)", aciklama: "Dev bacalı ve paslı metalik endüstriyel alan." },
+            { id: 4, isim: "Koru Sahili Metruk Depolar", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6650, boy: 29.2150, risk: "Düşük Risk", kamera: "Yok", aciklama: "Dalgaların dövdüğü eski betonarme iskele kalıntısı." },
+            { id: 5, isim: "Termal Eski Bağ Evi Kalıntısı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.5920, boy: 29.1820, risk: "Orta Risk", kamera: "Yok", aciklama: "Sarmaşıklarla kaplı tarihi taş metruk yapı." },
+            { id: 6, isim: "Armutlu Dağ Yolu Maden Atığı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.5310, boy: 28.8910, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Eski maden ocağının terk edilmiş şantiye binaları." },
+            { id: 7, isim: "Çınarcık Çobankale Etekleri Metruk Yapı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6410, boy: 29.1210, risk: "Orta Risk", kamera: "Yok", aciklama: "Tarihi kalıntıların hemen yanında eski taş evler." },
+            { id: 8, isim: "Topçular Eski İskele Lojmanları", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.7120, boy: 29.5100, risk: "Düşük Risk", kamera: "Var (Aktif)", aciklama: "Eski feribot ve liman çalışma dönemi metruk evleri." },
+            { id: 9, isim: "Yalova Merkez Eski Tekel Depoları", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6550, boy: 29.2700, risk: "Düşük Risk", kamera: "Var (Aktif Çevre)", aciklama: "Kentin merkezinde yıllardır kilitli duran eski ambarlar." },
+            { id: 10, isim: "Altınova Tersane Arkası Atıl Atölyeler", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.7200, boy: 29.5400, risk: "Yüksek Risk", kamera: "Var (Tersane Güvenliği)", aciklama: "Tersane sahası dışında kalmış eski metal işleme atölyeleri." },
+            { id: 11, isim: "Teşvikiye Orman İçi Bekçi Kulübesi", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6120, boy: 29.1450, risk: "Düşük Risk", kamera: "Yok", aciklama: "Derin orman içinde tamamen ahşap çökmüş kulübe." },
+            { id: 12, isim: "Kadıköy Eski Çiftlik Evi", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6720, boy: 29.2850, risk: "Düşük Risk", kamera: "Yok", aciklama: "Tarla ortasında kalmış, terk edilmiş iki katlı eski yapı." },
+            { id: 13, isim: "Çiftlikköy Sahil Atıl Su Pompası İstasyonu", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6680, boy: 29.3100, risk: "Düşük Risk", kamera: "Yok", aciklama: "Geçmişten kalma paslı borulu su basma binası." },
+            { id: 14, isim: "Samanlı Köyü Eski Değirmen Kalıntısı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6800, boy: 29.2400, risk: "Düşük Risk", kamera: "Yok", aciklama: "Dere kenarında taş duvarları kalan eski un değirmeni." },
+            { id: 15, isim: "Kurtköy Eski Taş Evler", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6300, boy: 29.3200, risk: "Orta Risk", kamera: "Yok", aciklama: "Köyün eski yerleşim yerinde terk edilmiş taş yapılar." },
+
+            // --- TIRMANIŞ & ZİRVE NOKTALARI ---
+            { id: 16, isim: "Delmece Yaylası Kayalık Tırmanış Alanı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5750, boy: 29.1100, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Sarp kayalık yapısı ve zorlu patikalarıyla tırmanışçılar için ideal." },
+            { id: 17, isim: "Hasanbaba Zirvesi ve Sarp Sırtlar", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6100, boy: 29.0500, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Dik yamaçları ve kayalık tırmanış hatlarıyla bilinir." },
+            { id: 18, isim: "Dipsöl Göl Çevresi Sarp Kayalıklar", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5600, boy: 29.1500, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Göl çevresindeki dik kayalık oluşumları ve free solo hatları." },
+            { id: 19, isim: "Teşvikiye Şelaleleri Üst Kayalık Duvarı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6300, boy: 29.1300, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Şelale kanyonunun dik mermerimsi kaya yüzeyleri." },
+            { id: 20, isim: "Armutlu Zirve Tepe Tırmanış Parkuru", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5400, boy: 28.9200, risk: "Orta Risk", kamera: "Yok", aciklama: "Orman içi dik tırmanış ve tepeye varış rotası." },
+            { id: 21, isim: "Sarmasık Köyü Kayalık Duvarları", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6400, boy: 29.2200, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Kaya tırmanışı antrenmanları için sarp kayalık yığınları." },
+            { id: 22, isim: "Gacık Dağı Sırt Hattı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6700, boy: 29.2000, risk: "Orta Risk", kamera: "Yok", aciklama: "Zorlu eğime sahip tırmanış ve yürüyüş ridge hattı." },
+            { id: 23, isim: "Üvezpınar Üstü Kayalık Kulvar", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6050, boy: 29.1600, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Termal üstü sarp dik yamaç tırmanış noktası." },
+            { id: 24, isim: "Sudüşen Kanyonu Dik Geçiş Kayalıkları", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6200, boy: 29.1250, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Kanyon içi teknik tırmanış gerektiren kayalar." },
+            { id: 25, isim: "Kavaklı Dağı Zirve Kayalığı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5800, boy: 29.0200, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Bölgenin en sert tırmanış rotalarından biri." },
+            { id: 26, isim: "Esadiye Köyü Sarp Tepe", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6500, boy: 29.1800, risk: "Orta Risk", kamera: "Yok", aciklama: "Tırmanışa yeni başlayanlar için dik tepe tırmanışı." },
+            { id: 27, isim: "Ayazma Deresi Kayalık Duvarları", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5900, boy: 29.1300, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Dere yatağını çevreleyen dikey kaya yüzeyleri." },
+            { id: 28, isim: "Selimiye Tepe Tırmanışı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5500, boy: 29.0500, risk: "Orta Risk", kamera: "Yok", aciklama: "Zirveye tırmanırken manzaraya açılan dik patika." },
+            { id: 29, isim: "Şenköy Kayalık Çıkışı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6350, boy: 29.0800, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Tırmanış becerisi gerektiren sert kayalık etap." },
+            { id: 30, isim: "Ortaburun Sarp Sırtları", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6800, boy: 29.3500, risk: "Orta Risk", kamera: "Yok", aciklama: "Tepe tırmanışı ve kaya geçişleri." },
+
+            // --- MANZARA NOKTALARI ---
+            { id: 31, isim: "Yalova Kent Ormanı Seyir Terası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6400, boy: 29.2300, risk: "Düşük Risk", kamera: "Yok", aciklama: "Körfezi ve Yalova'yı yüksekten gören harika manzara noktası." },
+            { id: 32, isim: "Çınarcık Tepe Manzara Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6450, boy: 29.0700, risk: "Düşük Risk", kamera: "Yok", aciklama: "Marmara denizini ve Adaları tepeden izleme yeri." },
+            { id: 33, isim: "Armutlu Hayır Baba Tepe Seyir", kategori: "Manzara Noktası", simge: "🌄", en: 40.5100, boy: 28.8800, risk: "Düşük Risk", kamera: "Yok", aciklama: "Bütün Armutlu kıyı şeridini ayaklar altına seren tepe." },
+            { id: 34, isim: "Termal Üstü Yayla Manzara Balkonu", kategori: "Manzara Noktası", simge: "🌄", en: 40.5850, boy: 29.1700, risk: "Düşük Risk", kamera: "Yok", aciklama: "Orman denizinin birleştiği devasa panoramik nokta." },
+            { id: 35, isim: "Delmece Yaylası Zirve Manzara Duvarı", kategori: "Manzara Noktası", simge: "🌄", en: 40.5700, boy: 29.1200, risk: "Orta Risk", kamera: "Yok", aciklama: "Bulutların üstünde hissettiren muazzam rakım." },
+            { id: 36, isim: "Samanlı Dağları Zirve Seyir Yeri", kategori: "Manzara Noktası", simge: "🌄", en: 40.5600, boy: 29.0800, risk: "Orta Risk", kamera: "Yok", aciklama: "Geniş açılı körfez ve dağ manzarası." },
+            { id: 37, isim: "Gacık Tepesi Gün Batımı Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6650, boy: 29.2100, risk: "Düşük Risk", kamera: "Yok", aciklama: "Gün batımını izlemek için en popüler yüksek tepe." },
+            { id: 38, isim: "Esenköy Tepe Gözetleme Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6200, boy: 28.9400, risk: "Düşük Risk", kamera: "Yok", aciklama: "Denize hakim uçurum kenarı seyir alanı." },
+            { id: 39, isim: "Fıstıklı Üstü Yayla Manzarası", kategori: "Manzara Noktası", simge: "🌄", en: 40.5300, boy: 28.8600, risk: "Düşük Risk", kamera: "Yok", aciklama: "Marmara ve dağların buluştuğu sakin tepe." },
+            { id: 40, isim: "Teşvikiye Üstü Panorama Tepe", kategori: "Manzara Noktası", simge: "🌄", en: 40.6150, boy: 29.1350, risk: "Düşük Risk", kamera: "Yok", aciklama: "Kanyonu ve vadiyi yukarıdan gören nokta." },
+            { id: 41, isim: "Köprülü Tepe Seyir Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6850, boy: 29.3800, risk: "Düşük Risk", kamera: "Yok", aciklama: "Osmangazi Köprüsü'nü ve körfezi gören dev manzara." },
+            { id: 42, isim: "Sugüldü Tepe Manzara Alanı", kategori: "Manzara Noktası", simge: "🌄", en: 40.6000, boy: 29.2000, risk: "Düşük Risk", kamera: "Yok", aciklama: "Yeşillikler içinde saklı seyir balkonu." },
+            { id: 43, isim: "İhsaniye Yüksek Tepe Seyir", kategori: "Manzara Noktası", simge: "🌄", en: 40.6700, boy: 29.3300, risk: "Düşük Risk", kamera: "Yok", aciklama: "Ovayı ve denizi gören hakim tepe." },
+            { id: 44, isim: "Kurtköy Tepe Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6250, boy: 29.3100, risk: "Düşük Risk", kamera: "Yok", aciklama: "Doğa manzaralı yüksek dinlenme tepesi." },
+            { id: 45, isim: "Güneyköy Sırtı Manzara Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.5500, boy: 29.2150, risk: "Düşük Risk", kamera: "Yok", aciklama: "Dağların arasından körfeze bakan açı." },
+
+            // --- EKSTRA DİĞER URBEX VE KEŞİF NOKTALARI (46 - 80) ---
+            { id: 46, isim: "Armutlu Sahil Metruk Çay Bahçesi", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.5050, boy: 28.8450, risk: "Düşük Risk", kamera: "Yok", aciklama: "Yıllardır kapalı olan sahil tesis kalıntısı." },
+            { id: 47, isim: "Çınarcık Orman Deposu Kalıntıları", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6350, boy: 29.1000, risk: "Orta Risk", kamera: "Var (Orman İşletme)", aciklama: "Eski orman işletme atıl ahşap binaları." },
+            { id: 48, isim: "Termal Eski Otel Lojmanı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6050, boy: 29.1800, risk: "Orta Risk", kamera: "Yok", aciklama: "Kaplıcalar bölgesinde boşaltılmış eski personel lojmanı." },
+            { id: 49, isim: "Yalova Doğu Sahili Atıl Fabrika Kalıntısı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6600, boy: 29.3000, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Çatısı çökmüş eski metal imalathanesi." },
+            { id: 50, isim: "Topçular Üstü Kayalık Tırmanış Duvarı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.7000, boy: 29.4800, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Feribot yolu üstünde sarp kaya yapısı." },
+            { id: 51, isim: "Kadıköy Tepe Seyir Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6650, boy: 29.2900, risk: "Düşük Risk", kamera: "Yok", aciklama: "Merkeze yakın gün batımı tepesi." },
+            { id: 52, isim: "Selimiye Metruk Köy Evi", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.5450, boy: 29.0450, risk: "Orta Risk", kamera: "Yok", aciklama: "Köyün ucunda doğaya terk edilmiş taş ev." },
+            { id: 53, isim: "Dipsiz Göl Tepe Tırmanışı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5550, boy: 29.1400, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Gölün dik yamaç tırmanış parkuru." },
+            { id: 54, isim: "Koru Beldesi Atıl Şantiye", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6700, boy: 29.2200, risk: "Orta Risk", kamera: "Var (Gece Bekçisi)", aciklama: "Yarım kalmış inşaat projesi kalıntısı." },
+            { id: 55, isim: "Armutlu Dağ Yolu Manzara Balkonu", kategori: "Manzara Noktası", simge: "🌄", en: 40.5200, boy: 28.8700, risk: "Düşük Risk", kamera: "Yok", aciklama: "Yol üstü harika körfez manzarası." },
+            { id: 56, isim: "Şenköy Eski Taş Yapı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6400, boy: 29.0900, risk: "Orta Risk", kamera: "Yok", aciklama: "Tarihi dokuya sahip metruk yapı." },
+            { id: 57, isim: "Hasanbaba Dik Kayalık Kulvarı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6150, boy: 29.0550, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Zorlu tırmanış bacası." },
+            { id: 58, isim: "Yalova Batı Sahili Seyir Alanı", kategori: "Manzara Noktası", simge: "🌄", en: 40.6500, boy: 29.2500, risk: "Düşük Risk", kamera: "Yok", aciklama: "Sahil boyunca açık deniz manzarası." },
+            { id: 59, isim: "Çiftlikköy Atıl Depo Alanı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6750, boy: 29.3200, risk: "Orta Risk", kamera: "Var (Aktif)", aciklama: 
