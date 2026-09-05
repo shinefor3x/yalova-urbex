@@ -203,4 +203,77 @@
             { id: 58, isim: "Yalova Batı Sahili Seyir Alanı", kategori: "Manzara Noktası", simge: "🌄", en: 40.6500, boy: 29.2500, risk: "Düşük Risk", kamera: "Yok", aciklama: "Sahil boyunca açık deniz manzarası." },
             { id: 59, isim: "Çiftlikköy Atıl Depo Alanı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6750, boy: 29.3200, risk: "Orta Risk", kamera: "Var (Aktif)", aciklama: "Eski kereste ve malzeme deposu harabesi." },
             { id: 60, isim: "Termal Kanyonu Üst Patika Zirvesi", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5950, boy: 29.1550, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Kanyonu t
+                        ];
+
+        let markers = [];
+        let aktifKategori = 'hepsi';
+
+        function haritayiGuncelle(filtreliListe) {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            const listContainer = document.getElementById('location-list');
+            listContainer.innerHTML = '';
+
+            filtreliListe.forEach(lok => {
+                const customIcon = ikonOlustur(lok.simge);
+                const marker = L.marker([lok.en, lok.boy], { icon: customIcon }).addTo(map);
                 
+                marker.bindPopup(`
+                    <div style="color:#000;">
+                        <b style="font-size:14px; color:#ff4757;">${lok.isim}</b><br>
+                        <span style="font-size:11px; background:#333; color:#fff; padding:2px 4px; border-radius:3px;">${lok.kategori}</span>
+                        <p style="font-size:12px; margin-top:5px;">${lok.aciklama}</p>
+                        <hr style="margin:5px 0;">
+                        <b>Durum:</b> ${lok.kamera} | ${lok.risk}<br>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lok.en},${lok.boy}" target="_blank" style="display:block; margin-top:6px; background:#2ed573; color:#000; text-align:center; padding:4px; text-decoration:none; font-weight:bold; border-radius:3px;">Google Haritalar ile Git</a>
+                    </div>
+                `);
+
+                markers.push(marker);
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <span class="badge">${lok.kategori}</span>
+                    <h3>${lok.simge} ${lok.isim}</h3>
+                    <p>${lok.aciklama}</p>
+                    <div>
+                        <span class="info-tag ${lok.kamera.includes('Var') ? 'tag-cam-var' : 'tag-cam-yok'}">${lok.kamera}</span>
+                        <span class="info-tag tag-risk">${lok.risk}</span>
+                    </div>
+                    <a class="btn-nav" href="https://www.google.com/maps/dir/?api=1&destination=${lok.en},${lok.boy}" target="_blank">Rota Oluştur</a>
+                `;
+
+                card.onclick = (e) => {
+                    if(e.target.tagName !== 'A') {
+                        map.setView([lok.en, lok.boy], 15);
+                        marker.openPopup();
+                    }
+                };
+
+                listContainer.appendChild(card);
+            });
+        }
+
+        function kategoriFiltrele(kategori, btn) {
+            aktifKategori = kategori;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filtrele();
+        }
+
+        function filtrele() {
+            const aramaMetni = document.getElementById('search-input').value.toLowerCase();
+            const filtrelenmis = mekanlar.filter(lok => {
+                const kategoriUyumu = (aktifKategori === 'hepsi' || lok.kategori === aktifKategori);
+                const aramaUyumu = lok.isim.toLowerCase().includes(aramaMetni) || lok.aciklama.toLowerCase().includes(aramaMetni);
+                return kategoriUyumu && aramaUyumu;
+            });
+            haritayiGuncelle(filtrelenmis);
+        }
+
+        haritayiGuncelle(mekanlar);
+    </script>
+</body>
+</html>
