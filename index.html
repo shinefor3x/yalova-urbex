@@ -128,14 +128,15 @@
 
         const map = L.map('map').setView([40.6500, 29.2600], 11);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        }) L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
+
             maxZoom: 19
         }).addTo(map);
 
         function ikonOlustur(simge) {
             return L.divIcon({
-                className: 'custom-icon',
+            })  className: 'custom-icon',
                 html: simge,
                 iconSize: [36, 36],
                 iconAnchor: [18, 18]
