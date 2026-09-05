@@ -10,35 +10,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { display: flex; height: 100vh; background-color: #121212; color: #fff; overflow: hidden; }
         
-        /* Açılış Animasyonu Ekranı */
-        #welcome-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #0d0d0d;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-            transition: opacity 0.6s ease, visibility 0.6s;
-        }
-        #welcome-screen h1 {
-            font-size: 2rem;
-            color: #ff4757;
-            text-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
-            margin-bottom: 10px;
-            text-align: center;
-            padding: 0 20px;
-        }
-        #welcome-screen p {
-            font-size: 0.85rem;
-            color: #aaa;
-            letter-spacing: 2px;
-        }
-
         /* Yan Panel ve Arayüz */
         #sidebar { width: 420px; background-color: #1e1e1e; padding: 20px; overflow-y: auto; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
         #sidebar h1 { font-size: 1.25rem; color: #ff4757; }
@@ -84,12 +55,6 @@
 </head>
 <body>
 
-    <!-- Karşılama Ekranı -->
-    <div id="welcome-screen">
-        <h1>Hoşgeldin Sahip Doğu 🏚️</h1>
-        <p>80 NOKTALIK TAKTİKSEL ARŞİV YÜKLENİYOR...</p>
-    </div>
-
     <div id="sidebar">
         <div>
             <h1>🏚️ Yalova Taktiksel Urbex & Zirve</h1>
@@ -114,17 +79,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                const welcomeScreen = document.getElementById('welcome-screen');
-                if(welcomeScreen) {
-                    welcomeScreen.style.opacity = '0';
-                    welcomeScreen.style.visibility = 'hidden';
-                    setTimeout(() => welcomeScreen.remove(), 600);
-                }
-            }, 2000);
-        });
-
         const map = L.map('map').setView([40.6500, 29.2600], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -201,9 +155,34 @@
             { id: 56, isim: "Şenköy Eski Taş Yapı", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6400, boy: 29.0900, risk: "Orta Risk", kamera: "Yok", aciklama: "Tarihi dokuya sahip metruk yapı." },
             { id: 57, isim: "Hasanbaba Dik Kayalık Kulvarı", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6150, boy: 29.0550, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Zorlu tırmanış bacası." },
             { id: 58, isim: "Yalova Batı Sahili Seyir Alanı", kategori: "Manzara Noktası", simge: "🌄", en: 40.6500, boy: 29.2500, risk: "Düşük Risk", kamera: "Yok", aciklama: "Sahil boyunca açık deniz manzarası." },
-            { id: 59, isim: "Çiftlikköy Atıl Depo Alanı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6750, boy: 29.3200, risk: "Orta Risk", kamera: "Var (Aktif)", aciklama: "Eski kereste ve malzeme deposu harabesi." },
-            { id: 60, isim: "Termal Kanyonu Üst Patika Zirvesi", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5950, boy: 29.1550, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Kanyonu t
-                        ];
+            { id: 59, isim: "Çiftlikköy Atıl Depo Alanı", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6750, boy: 29.3200, risk: "Orta Risk", kamera: "Var (Aktif)", aciklama: "Eski kereste ve malzeme deposu harabesei." },
+            { id: 60, isim: "Termal Kanyonu Üst Patika Zirvesi", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5950, boy: 29.1550, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Kanyonu tepeden turlayan dik patika." },
+            { id: 61, isim: "Sugüldü Eski Değirmen", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6050, boy: 29.1950, risk: "Düşük Risk", kamera: "Yok", aciklama: "Orman içinde kaybolmuş taş duvar kalıntısı." },
+            { id: 62, isim: "Esenköy Sahil Kayalık Zirve", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.6250, boy: 28.9500, risk: "Orta Risk", kamera: "Yok", aciklama: "Denize sıfır sarp kaya çıkıntısı." },
+            { id: 63, isim: "Teşvikiye Şelale Seyir Tepesi", kategori: "Manzara Noktası", simge: "🌄", en: 40.6250, boy: 29.1300, risk: "Düşük Risk", kamera: "Yok", aciklama: "Şelale güzergahındaki yüksek manzara noktası." },
+            { id: 64, isim: "Altınova Sahil Atıl İskele", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.7150, boy: 29.5200, risk: "Orta Risk", kamera: "Var", aciklama: "Kullanılmayan eski sanayi yükleme iskelesi." },
+            { id: 65, isim: "Gacık Köyü Eski Metruk Okul", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6600, boy: 29.2050, risk: "Düşük Risk", kamera: "Yok", aciklama: "Köy içinde terk edilmiş eski eğitim yapısı." },
+            { id: 66, isim: "Kadıköy Sanayi Atıl Atölye", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6700, boy: 29.2800, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Metruk demir doğrama atölyesi." },
+            
+
+
+
+            
+        
+            { id: 68, isim: "Armutlu Merkez Atıl Soğuk Hava", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.5100, boy: 28.8500, risk: "Orta Risk", kamera: "Yok", aciklama: "Eski balık/meyve soğuk hava deposu binası." },
+            { id: 69, isim: "Fıstıklı Dağ Yolu Seyir Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.5250, boy: 28.8600, risk: "Düşük Risk", kamera: "Yok", aciklama: "Virajlı dağ yolunda muazzam körfez açısı." },
+            { id: 70, isim: "Samanlı Dağ Yolu Kayalıkları", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5850, boy: 29.0600, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Yol kenarı dikey kaya duvarları." },
+            { id: 71, isim: "Üvezpınar Metruk Bağ Evi", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6000, boy: 29.1650, risk: "Düşük Risk", kamera: "Yok", aciklama: "Bahçe içinde tek katlı terk edilmiş yapı." },
+            { id: 72, isim: "Taşköprü Sahil Eski Fabrika Deposu", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6600, boy: 29.3450, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Girişi açık, pencereleri kırık dev depo." },
+            { id: 73, isim: "Kurtköy Dere Kenarı Metruk Değirmen", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6320, boy: 29.3150, risk: "Orta Risk", kamera: "Yok", aciklama: "Doğayla bütünleşmiş eski değirmen kalıntısı." },
+            { id: 74, isim: "İhsaniye Tepe Gözetleme", kategori: "Manzara Noktası", simge: "🌄", en: 40.6750, boy: 29.3400, risk: "Düşük Risk", kamera: "Yok", aciklama: "Bölgenin hakim tepesinde dinlenme alanı." },
+            { id: 75, isim: "Koru Sahili Atıl Tesis", kategori: "Terk Edilmiş Yapı", simge: "🏚️", en: 40.6680, boy: 29.2100, risk: "Orta Risk", kamera: "Yok", aciklama: "Yıllar önce kapatılmış sahil eğlence yeri." },
+            { id: 76, isim: "Selimiye Yayla Geçidi Zirvesi", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5520, boy: 29.0550, risk: "Orta Risk", kamera: "Yok", aciklama: "Yayla geçişindeki en yüksek nokta." },
+            { id: 77, isim: "Şenköy Vadi Seyir Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.6300, boy: 29.0750, risk: "Düşük Risk", kamera: "Yok", aciklama: "Yeşil vadiyi ve dağları izleme balkonu." },
+            { id: 78, isim: "Yalova Merkez Atıl Depo", kategori: "Sanayi / Atıl", simge: "🏭", en: 40.6520, boy: 29.2650, risk: "Orta Risk", kamera: "Var", aciklama: "Şehir merkezinde çevresi kapalı eski depo." },
+            { id: 79, isim: "Termal Tepe Zirve Noktası", kategori: "Manzara Noktası", simge: "🌄", en: 40.5900, boy: 29.1750, risk: "Düşük Risk", kamera: "Yok", aciklama: "Kaplıca bölgesini tepeden gören son nokta." },
+            { id: 80, isim: "Armutlu Sarp Kıyı Kayalıkları", kategori: "Tırmanış & Zirve", simge: "🧗‍♂️", en: 40.5150, boy: 28.8400, risk: "Yüksek Risk", kamera: "Yok", aciklama: "Denize dikey inen tehlikeli kayalık hat." }
+        ];
 
         let markers = [];
         let aktifKategori = 'hepsi';
@@ -276,4 +255,4 @@
         haritayiGuncelle(mekanlar);
     </script>
 </body>
-</html>
+</html>   
