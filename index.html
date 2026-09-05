@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yalova & Çevresi Urbex Haritası</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { display: flex; height: 100vh; background-color: #121212; color: #fff; overflow: hidden; }
+        
+        /* Açılış Animasyonu Ekranı */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0d0d0d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        #welcome-screen h1 {
+            font-size: 2.2rem;
+            color: #ff4757;
+            text-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
+            margin-bottom: 10px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        #welcome-screen p {
+            font-size: 0.9rem;
+            color: #aaa;
+            letter-spacing: 2px;
+        }
+
+        /* Yan Panel ve Arayüz */
+        #sidebar { width: 380px; background-color: #1e1e1e; padding: 20px; overflow-y: auto; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+        #sidebar h1 { font-size: 1.4rem; color: #ff4757; }
+        #sidebar p { font-size: 0.85rem; color: #aaa; }
+        
+        #search-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; outline: none; }
+        .filter-container { display: flex; flex-wrap: wrap; gap: 6px; }
+        .filter-btn { background: #2a2a2a; border: 1px solid #444; color: #ccc; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .filter-btn.active, .filter-btn:hover { background: #ff4757; color: #fff; border-color: #ff4757; }
+
+        #location-list { flex: 1; overflow-y: auto; }
+        .card { background-color: #2a2a2a; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ff4757; transition: 0.2s; }
+        .card:hover { background-color: #333; }
+        .card h3 { font-size: 1rem; margin-bottom: 6px; }
+        .card .badge { display: inline-block; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background-color: #ff4757; color: #fff; margin-bottom: 6px; }
+        .card p { font-size: 0.8rem; color: #ccc; margin-bottom: 8px; }
+        .btn-nav { display: block; text-align: center; background-color: #2ed573; color: #000; padding: 8px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.8rem; margin-top: 6px; }
+        
+        #map { flex: 1; height: 100%; z-index: 1; }
+        
+        .custom-icon {
+            background: #2a2a2a;
+            border: 2px solid #ff4757;
+            border-radius: 50%;
+            color: #fff;
+            text-align: center;
+            line-height: 36px;
+            font-size: 18px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .popup-gallery { display: flex; gap: 5px; margin: 8px 0; overflow-x: auto; }
+        .popup-gallery img { width: 110px; height: 75px; object-fit: cover; border-radius: 4px; border: 1px solid #444; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column-reverse; }
+            #sidebar { width: 100%; height: 45vh; }
+            #map { height: 55vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Karşılama Ekranı -->
+    <div id="welcome-screen">
+        <h1>Hoşgeldin Sahip Doğu 🏚️</h1>
+        <p>YALOVA URBEX HARİTASI YÜKLENİYOR...</p>
+    </div>
+
+    <div id="sidebar">
+        <div>
+            <h1>🏚️ Yalova Urbex Haritası</h1>
+            <p>Terk edilmiş yapılar, askeri alanlar, hastaneler ve sanayi kalıntıları</p>
+        </div>
+        
+        <!-- Arama Kutusu -->
+        <input type="text" id="search-input" placeholder="Mekan ara..." onkeyup="filtrele()">
+
+        <!-- Kategori Filtreleri -->
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="kategoriFiltrele('hepsi', this)">Tümü</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Terk Edilmiş Ev / Yapı', this)">🏚️ Yapılar</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Sanayi / Santral', this)">🏭 Sanayi</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Hastane / Sağlık', this)">🏥 Sağlık</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Askeri Tesis', this)">🪖 Askeri</button>
+            <button class="filter-btn" onclick="kategoriFiltrele('Dini / Tarihi Yapı', this)">⛪ Tarihi</button>
+        </div>
+
+        <div id="location-list"></div>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Animasyon Kapama
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const welcomeScreen = document.getElementById('welcome-screen');
+                if(welcomeScreen) {
+                    welcomeScreen.style.opacity = '0';
+                    welcomeScreen.style.visibility = 'hidden';
+                    setTimeout(() => welcomeScreen.remove(), 600);
+                }
+            }, 2200);
+        });
+
+        // Haritayı Odakla
+        const map = L.map('map').setView([40.5500, 29.0500], 11);
+
+        // Dark Katman
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        function ikonOlustur(simge) {
+            return L.divIcon({
+                className: 'custom-icon',
+                html: simge,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+        }
+
+        // Tüm Urbex Veri Seti
+        const mekenlar = [
+            {
+                id: 1,
+                isim: "Fıstıklı Terk Edilmiş Tatil Köyü",
+                kategori: "Terk Edilmiş Ev / Yapı",
+                simge: "🏚️",
+                en: 40.5231, boy: 28.8512,
+                tehlike: "Orta",
+                aciklama: "Kıyı şeridinde yer alan çürümeye yüz tutmuş eski otel ve ahşap/beton tesisler.",
+                fotograflar: [
+                    "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300",
+                    "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=300"
+                ]
+            },
+            {
+                id: 2,
+                isim: "Narlı Atıl Zeytinyağı & Enerji Depoları",
+                kategori: "Sanayi / Santral",
+                simge: "🏭",
+                en: 40.4815, boy: 29.0821,
+                tehlike: "Düşük",
+                aciklama: "Eski zeytin işleme tesisleri, paslanmış makine aksamları ve boş depolar.",
+                fotograflar: [
+                    "https://images.unsplash.com/photo-1508873696983-2df515122519?w=300",
+                    "https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=300"
+                ]
+            },
+            {
+                id: 3,
+                isim: "Termal Atıl Şifa & Lojman Kompleksi",
+                kategori: "Hastane / Sağlık",
+                simge: "🏥",
+                en: 40.6012, boy: 29.1745,
+                tehlike: "Düşük",
+                aciklama: "Eski kaplıca idari binaları, tedavi odaları ve boşaltılmış lojmanlar.",
+                fotograflar: [
+                    "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=300",
+                    "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=300"
+                ]
+            },
+            {
+                id: 4,
+                isim: "Taşköprü Eski Güvenlik & Lojman Hattı",
+                kategori: "Askeri Tesis",
+                simge: "🪖",
+                en: 40.6510, boy: 29.3320,
+                tehlike: "Yüksek (Giriş Kısıtlı)",
+                aciklama: "Eski sınır güvenlik kulübeleri, nöbet kulübeleri ve dış lojman yıkıntıları.",
+                fotograflar: [
+                    "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=300",
+                    "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300"
+                ]
+            },
+            {
+                id: 5,
+                isim: "Güneyköy Eski Taş İbadethane Kalıntısı",
+                kategori: "Dini / Tarihi Yapı",
+                simge: "⛪",
+                en: 40.5510, boy: 29.2100,
+                tehlike: "Orta",
+                aciklama: "Doğa tarafından sarılmış tarihi taş duvarlar ve eski yapı temelleri.",
+                fotograflar: [
+                    "https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=300",
+                    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300"
+                ]
+            }
+        ];
+
+        let aktifKat = 'hepsi';
+        let tumMarkerlar = [];
+
+        function mekanlariYukle() {
+            const container = document.getElementById('location-list');
+            container.innerHTML = '';
+            
+            tumMarkerlar.forEach(m => map.removeLayer(m.marker));
+            tumMarkerlar = [];
+
+            const aramaMetni = document.getElementById('search-input').value.toLowerCase();
+
+            mekanlar.forEach(m => {
+                const katUyum = aktifKat === 'hepsi' || m.kategori === aktifKat;
+                const aramaUyum = m.isim.toLowerCase().includes(aramaMetni) || m.aciklama.toLowerCase().includes(aramaMetni);
+
+                if (katUyum && aramaUyum) {
+                    const marker = L.marker([m.en, m.boy], { icon: ikonOlustur(m.simge) }).addTo(map);
+                    const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.en},${m.boy}`;
+
+                    let fotoHtml = '<div class="popup-gallery">';
+                    m.fotograflar.forEach(imgUrl => {
+                        fotoHtml += `<img src="${imgUrl}" alt="Urbex">`;
+                    });
+                    fotoHtml += '</div>';
+
+                    const popupIcerik = `
+                        <div style="color: #000; max-width: 260px;">
+                            <h3 style="font-size:1.05rem;">${m.simge} ${m.isim}</h3>
+                            <p style="font-size:0.8rem; color:#555; margin-top:2px;"><b>Kategori:</b> ${m.kategori}</p>
+                            <p style="font-size:0.8rem; color:#555;"><b>Tehlike:</b> ${m.tehlike}</p>
+                            ${fotoHtml}
+                            <p style="font-size:0.8rem; margin-bottom:6px;">${m.aciklama}</p>
+                            <a href="${gUrl}" target="_blank" style="display:block; text-align:center; background:#2ed573; color:#000; padding:5px; border-radius:4px; font-weight:bold; text-decoration:none; font-size:0.75rem;">Google Maps Yol Tarifi</a>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupIcerik);
+                    tumMarkerlar.push({ id: m.id, marker: marker });
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <span class="badge">${m.simge} ${m.kategori}</span>
+                        <h3>${m.isim}</h3>
+                        <p>⚠️ Tehlike: ${m.tehlike}</p>
+                        <p style="font-size:0.75rem; color:#aaa; margin-bottom:6px;">${m.aciklama}</p>
+                        <a href="${gUrl}" target="_blank" class="btn-nav">Google Maps Yol Tarifi</a>
+                    `;
+
+                    card.addEventListener('click', (e) => {
+                        if(e.target.tagName !== 'A') {
+                            map.flyTo([m.en, m.boy], 14, { duration: 1.5 });
+                            marker.openPopup();
+                        }
+                    });
+
+                    container.appendChild(card);
+                }
+            });
+        }
+
+        function kategoriFiltrele(kat, btn) {
+            aktifKat = kat;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            mekanlariYukle();
+        }
+
+        function filtrele() {
+            mekanlariYukle();
+        }
+
+        mekanlariYukle();
+    </script>
+</body>
+</html>
